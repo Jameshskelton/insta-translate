@@ -27,7 +27,7 @@ Three findings materially shape the design:
    Hy-MT2 covers 36 languages; Phase 0 showed VoxCPM2's cloned-voice path is
    unusable here (RTF 61.7), while **ZONOS3-Mini** covers **43 languages**, streams
    natively, and measured RTF 0.22–0.40 with 95–200 ms warm first audio. Kokoro
-   remains an 8-language fallback. See `phase0/RESULTS.md`.
+   remains an 8-language fallback. See `docs/PHASE0-AUDIT.md`.
 
 3. **VoxWeft implements most of this spec, but it is not a product base.**
    [HenryZ838978/VoxWeft](https://github.com/HenryZ838978/VoxWeft) (Apache-2.0) has
@@ -38,7 +38,7 @@ Three findings materially shape the design:
    and its own devlog records ten confirmed post-release defects — six of them cases
    of "the docs describe the fix, the code doesn't have it". See section 2.
 
-**Phase 0 is complete.** Results are in `phase0/RESULTS.md`. Three plan changes came
+**Phase 0 is complete.** Results are in `docs/PHASE0-AUDIT.md`. Three plan changes came
 out of it: switch TTS to ZONOS3-Mini, force `llama-server -c 2048 -np 1`, and design
 for half-duplex mic ducking from day one. Continuous sessions were verified to work.
 
@@ -126,7 +126,7 @@ tests: 48/48 on M2, 43 passed / 2 skipped on Linux.
 **Phase 0 confirmed the two biggest concerns.** AEC fails on this MacBook Pro's
 built-in mic (1 ch → 9 ch, `start()` = -10875). VoxCPM2's cloned voices stall the
 pipeline (RTF 61.7). Both are now resolved design decisions, not open risks
-(`phase0/RESULTS.md`).
+(`docs/PHASE0-AUDIT.md`).
 
 ### Decision (updated after Phase 0)
 
@@ -279,7 +279,7 @@ ZONOS3 removes that ceiling.
 ### Phase 0 — Hostile audit on your M5 — ✅ COMPLETE
 
 Goal: find out whether the vendored core works *here*, before building a UI on top.
-Full results and raw logs are in `phase0/RESULTS.md`. Outcome: upstream tests pass,
+Full results and raw logs are in `docs/PHASE0-AUDIT.md`. Outcome: upstream tests pass,
 AEC fails, VoxCPM2 cloned voices are unusable, ZONOS3-Mini is the replacement,
 continuous sessions work, and `llama-server` needs `-c 2048 -np 1`.
 
