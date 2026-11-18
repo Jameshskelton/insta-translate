@@ -183,15 +183,26 @@ def stop_all():
         stop_one(name)
 
 
+def _pid_alive(pid):
+    if not pid:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
 def status():
     RUN.mkdir(parents=True, exist_ok=True)
     for name, s in _services.items():
-        p = s.get("proc")
-        running = bool(p and p.poll() is None)
-        state = "RUNNING" if running else ("dead" if p else "never started")
-        ready = " ready" if (running and http_ok(s["ready_url"])) else ""
-        print(f"{name:14} {state}{ready}")
-        if not running:
+        pidf = RUN / f"{name}.pid"
+        pid = int(pidf.read_text().strip()) if pidf.exists() else None
+        alive = _pid_alive(pid)
+        ready = " ready" if (alive and http_ok(s["ready_url"])) else ""
+        print(f"{name:14} {'RUNNING' if alive else 'stopped'}{ready}"
+              f"{f'  (pid {pid})' if pid else ''}")
+        if not alive and pid:
             print(_tail(s["logfile"], 6))
 
 
