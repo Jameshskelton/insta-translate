@@ -14,7 +14,7 @@ if [ ! -x "$RUNTIME/.venv/bin/python" ]; then
   uv venv --python 3.12 "$RUNTIME/.venv"
 fi
 uv pip install --python "$RUNTIME/.venv/bin/python" \
-  -e "$RUNTIME/voxweft[runtime]" websockets
+  -e "$RUNTIME/voxweft[runtime]" websockets pytest
 
 echo "==> llama.cpp toolchain"
 command -v llama-server >/dev/null || {

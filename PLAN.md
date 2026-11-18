@@ -324,6 +324,18 @@ Remaining in Phase 1:
 - Revisit continuous/open-mic only via a board with AEC (e.g. an external
   USB interface with hardware echo cancellation), not the built-in mic.
 
+✅ **Milestone 3 done — runtime promoted + project hygiene.** Backend moved out
+of `phase0/` into a real `runtime/`:
+- `runtime/voxweft/` — vendored VoxWeft (pinned `097fb20`), trimmed to the
+  Python package + tests + docs, with our two small patches.
+- `runtime/mini_bridge.py`, `runtime/supervisor.py` (3-service supervisor with
+  restart-on-crash and disk-backed `status`).
+- `scripts/setup.sh` (env + models + toolchain, idempotent), `backend.sh`
+  (start/stop/restart/status), `smoke_test.sh` (headless end-to-end, passing).
+- `git init` + `.gitignore`, `README.md`, `LICENSE`, `THIRD_PARTY_NOTICES.md`.
+- Vendored tests: 46 passed / 2 skipped. Smoke test: translation + audio +
+  turn_end delivered through the supervised backend.
+
 ### Phase 2 — Hy-MT2 as the translator — ✅ prototype done in Phase 0
 
 `phase0/VoxWeft/voxweft/runtime/translator_hymt2.py` already calls llama-server's
