@@ -1,0 +1,12 @@
+# License
+
+The insta-translate app, scripts, and the mini_bridge/supervisor runtime code
+are licensed under the **Apache License, Version 2.0**. You may obtain a copy
+of the license at:
+
+https://www.apache.org/licenses/LICENSE-2.0
+
+SPDX-License-Identifier: Apache-2.0
+
+Third-party components vendored or invoked by this project are NOT covered by
+this license — each carries its own; see `THIRD_PARTY_NOTICES.md`.

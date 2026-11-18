@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Builds
+app/build/
+runtime/voxweft/build/
+dist/
+
+# Python
+runtime/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Runtime state
+runtime/run/
+*.log
+
+# Models are kept in ~/.voxweft/models (outside the repo)
