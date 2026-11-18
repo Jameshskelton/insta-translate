@@ -18,3 +18,8 @@ runtime/run/
 *.log
 
 # Models are kept in ~/.voxweft/models (outside the repo)
+
+# Scratch / audit workspace — promoted pieces live in runtime/
+phase0/VoxWeft/
+phase0/*.wav
+phase0/aec_probe
