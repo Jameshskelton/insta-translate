@@ -44,7 +44,12 @@ if (( $(echo "$HAVE_GB < $NEED_GB" | bc 2>/dev/null || echo 0) )); then
 fi
 
 echo "==> import check"
-"$RUNTIME/.venv/bin/python" -c "import mlx, mlx_audio, voxweft; print('mlx', mlx.__version__, '| mlx_audio OK | voxweft OK')"
+"$RUNTIME/.venv/bin/python" - <<'PY'
+import importlib.metadata as md
+import voxweft  # noqa: F401
+import mlx_audio  # noqa: F401
+print("mlx", md.version("mlx"), "| mlx-audio", md.version("mlx-audio"), "| voxweft OK")
+PY
 
 echo
 echo "setup complete. Next:"
