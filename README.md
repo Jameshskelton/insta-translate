@@ -11,9 +11,10 @@ llama.cpp — nothing leaves the machine.
 ## Status
 
 Working push-to-talk interpreter: hold the mic to speak, release to hear the
-translation. Developed and verified on an **M5 MacBook Pro (24 GB)**, ~1.9–2.1 s
-per turn. Built as a personal tool that can be shared; see **Hardware & memory**
-below for what other machines need.
+translation — **answer back in your own voice**. ZONOS3-Mini clones the speaker
+from the utterance just spoken and synthesizes the translation with it. Developed
+and verified on an **M5 MacBook Pro (24 GB)**, ~1.9–2.1 s per turn. Built as a
+personal tool that can be shared; see **Hardware & memory** below.
 
 ## Requirements
 
@@ -63,6 +64,10 @@ All three models are resident (~6–7 GB) during a session:
 
 A working pair is the intersection (e.g. en↔es, en↔ja, zh↔en). The runtime
 auto-ducks the mic while speaking and re-listens after playback.
+
+**Voice cloning:** each translation is synthesized in the speaker's own voice,
+cloned from the utterance just spoken (the source segment becomes the reference).
+References shorter than ~0.4 s fall back to the neutral `none` voice.
 
 ### Measured latency (M5, 24 GB)
 

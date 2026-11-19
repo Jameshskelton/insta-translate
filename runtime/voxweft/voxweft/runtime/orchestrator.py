@@ -360,7 +360,8 @@ class Orchestrator:
                     "total_ms": round((time.perf_counter() - t0) * 1000)})
             return
 
-        await self._synth_and_send(seq, tgt_text, self.routes.voice_role)
+        await self._synth_and_send(seq, tgt_text, self.routes.voice_role,
+                                   ref_audio=seg.audio)
         if seq == self._seq:
             await self.send_json({
                 "type": "turn_end", "sentences": 1,
@@ -455,16 +456,19 @@ class Orchestrator:
                 eng = self.engines.get("qwen3asr") or self.engines["asr"]
         return eng.transcribe(audio, language=route.lang, hotwords=route.hotwords)
 
-    async def _synth_and_send(self, seq: int, text: str, voice_role: str) -> None:
+    async def _synth_and_send(self, seq: int, text: str, voice_role: str,
+                              ref_audio=None) -> None:
         """流式 TTS：边合成边发，首块一出来就 audio_start。
 
         全程持锁——见 `_synth_lock`。串行 worker 下这把锁不争用，它防的是
-        兜底通道那条并行路径。
+        兜底通道那条并行路径。`ref_audio` 是说话人的一段 16k 音频，交给
+        TTS 做 voice cloning（同传专属：用自己的声音说译文）。
         """
         async with self._synth_lock:
-            await self._synth_locked(seq, text, voice_role)
+            await self._synth_locked(seq, text, voice_role, ref_audio)
 
-    async def _synth_locked(self, seq: int, text: str, voice_role: str) -> None:
+    async def _synth_locked(self, seq: int, text: str, voice_role: str,
+                            ref_audio=None) -> None:
         tts = self.engines["tts"]
         aq: asyncio.Queue = asyncio.Queue()
         spoken = text or ""
@@ -480,8 +484,8 @@ class Orchestrator:
                 # any voice named after the role, else the bridge default.
                 voice = self.routes.voice_id(voice_role)
                 try:
-                    it = tts.synthesize_stream(spoken, voice)
-                except TypeError:          # engines that predate the voice arg
+                    it = tts.synthesize_stream(spoken, voice=voice, ref_audio=ref_audio)
+                except TypeError:          # engines that predate the voice/ref args
                     it = tts.synthesize_stream(spoken)
                 holder["it"] = it
                 for chunk in it:

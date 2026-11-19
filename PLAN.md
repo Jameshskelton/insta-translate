@@ -320,6 +320,11 @@ dead end here. Reverted to **push-to-talk** (press to listen, release to
 translate); mic frames are only forwarded between press and release, so the app
 cannot hear itself.
 
+- **Voice cloning (v0.1.1):** each translation is spoken in the user's own voice,
+  cloned by ZONOS3 from the utterance just spoken (serve passes the source
+  segment as `ref_audio_wav` to mini_bridge). Verified end-to-end via
+  `tools/voice_clone_e2e.py` (reference 4 s → cloned 5.5 s out, 231 ms first audio).
+
 Remaining in Phase 1:
 - Revisit continuous/open-mic only via a board with AEC (e.g. an external
   USB interface with hardware echo cancellation), not the built-in mic.

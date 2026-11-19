@@ -127,18 +127,27 @@ def _bridge_asr(audio: np.ndarray, language: str | None, hotwords) -> dict:
             "latency_ms": (time.perf_counter() - t0) * 1000}
 
 
-def _bridge_tts_stream(text: str, voice: str | None = None):
+def _bridge_tts_stream(text: str, voice: str | None = None,
+                       ref_audio=None) -> object:
     """POST /generate stream=true; bridge emits int16 @48k, we yield float32.
     `voice` names a reference installed on the bridge; unknown ids fall back
-    to the bridge default. Closing this generator closes the HTTP response,
-    which makes the bridge's producer thread fail its next write and stop —
-    that is how an interrupt reaches the TTS."""
+    to the bridge default. `ref_audio` is float32 mono 16 kHz source speech
+    used for voice cloning — encoded as a base64 WAV in the request body.
+    Closing this generator closes the HTTP response, which makes the bridge's
+    producer thread fail its next write and stop — that is how an interrupt
+    reaches the TTS."""
     import requests
+    import soundfile as sf
     body = {"target_text": text, "stream": True}
     if TTS_LANG_CODE:
         body["lang_code"] = TTS_LANG_CODE
     if voice:
         body["voice"] = voice
+    if ref_audio is not None and len(ref_audio):
+        buf = io.BytesIO()
+        sf.write(buf, (np.clip(ref_audio, -1, 1) * 32767).astype(np.int16),
+                 16000, format="WAV", subtype="PCM_16")
+        body["ref_audio_wav"] = base64.b64encode(buf.getvalue()).decode()
     r = requests.post(f"{BRIDGE_URL}/generate", stream=True, timeout=180, json=body)
     r.raise_for_status()
     gen = _BridgeStream(r, TTS_CHUNK_SAMPLES * 2)
@@ -231,8 +240,8 @@ class _ASREngine:
 
 
 class _TTSEngine:
-    def synthesize_stream(self, text, voice=None):
-        return _bridge_tts_stream(text, voice)
+    def synthesize_stream(self, text, voice=None, ref_audio=None):
+        return _bridge_tts_stream(text, voice, ref_audio)
 
 
 # ── SmartTurn (optional) ──────────────────────────────────────────────────────

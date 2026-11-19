@@ -125,11 +125,32 @@ class GenReq(BaseModel):
     external_id: str | None = None
     external_text: str | None = None
     lang_code: str | None = None
+    ref_audio_wav: str | None = None      # base64 WAV of the speaker (voice cloning)
     stream: bool = False
     temperature: float = 0.75
     cfg_value: float = 1.0
     cfg_scale: float = 1.0
     do_normalize: bool = True
+
+
+def _decode_ref_audio_wav(b64: str) -> np.ndarray | None:
+    """base64 WAV → float32 mono @ 44.1 kHz (ZONOS3's reference format).
+    Returns None for unusable input so the caller falls back to voice="none"."""
+    try:
+        payload = base64.b64decode(b64)
+        audio, sr = sf.read(io.BytesIO(payload), dtype="float32")
+    except Exception as e:
+        log.warning("ref audio decode failed: %s", e)
+        return None
+    if audio.ndim > 1:
+        audio = audio.mean(axis=1)
+    if sr != 44100:
+        audio = resample_poly(audio, 44100, sr).astype(np.float32)
+    audio = np.ascontiguousarray(audio, dtype=np.float32)
+    if len(audio) < int(0.4 * 44100):      # too short to clone meaningfully
+        log.warning("ref audio too short (%.2fs) — skipping clone", len(audio) / 44100)
+        return None
+    return audio
 
 
 @app.post("/generate")
@@ -138,6 +159,9 @@ async def generate(req: GenReq, request: Request):
     voice = req.voice if req.voice in tts.voices else VOICE
     lang = NAME_TO_CODE.get((req.lang_code or "").lower(),
                             NAME_TO_CODE.get((req.external_id or "").lower(), "en"))
+    ref = _decode_ref_audio_wav(req.ref_audio_wav) if req.ref_audio_wav else None
+    if ref is not None:
+        voice = "none"                       # the speaker comes from the reference
     q: asyncio.Queue = asyncio.Queue(maxsize=64)
     stop = threading.Event()
 
@@ -146,12 +170,14 @@ async def generate(req: GenReq, request: Request):
             buf = np.zeros(0, dtype=np.float32)
             y = buf
             pending = 0
-            for result in tts.generate(
-                text=req.target_text, voice=voice, lang_code=lang,
-                stream=True, streaming_interval=0.2,
-                temperature=req.temperature,
-                speaker_cfg_scale=req.cfg_scale,
-            ):
+            kw = dict(text=req.target_text, voice=voice, lang_code=lang,
+                      stream=True, streaming_interval=0.2,
+                      temperature=req.temperature,
+                      speaker_cfg_scale=req.cfg_scale)
+            if ref is not None:
+                kw["ref_audio"] = ref
+                log.info("voice cloning from %.2fs reference", len(ref) / 44100)
+            for result in tts.generate(**kw):
                 if stop.is_set():
                     break
                 arr = np.asarray(result.audio, dtype=np.float32).reshape(-1)
