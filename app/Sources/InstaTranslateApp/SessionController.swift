@@ -168,6 +168,20 @@ final class Session: ObservableObject {
         ws.sendJSON(["type": "interrupt", "reason": "user"])
     }
 
+    /// Start fresh: drop the transcript, stop any playback/in-flight work, and
+    /// tell the server to clear its session state (segmenter, buffered frames).
+    func clearConversation() {
+        turns.removeAll()
+        audio.stopPlayback()
+        recording = false
+        stage = .idle
+        lastError = ""
+        if connected {
+            ws.sendJSON(["type": "reset"])
+        }
+        status = connected ? "connected — cleared" : "idle"
+    }
+
     // MARK: - text input (demo / auto-test)
 
     func sendDemo(_ text: String) {

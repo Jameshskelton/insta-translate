@@ -80,6 +80,7 @@ private struct ContentView: View {
             Text(s.routes).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
             Spacer()
             Pill(text: "Test", tint: .purple).tappable { s.sendDemo("The weather is lovely today, let us go for a walk.") }
+            Pill(text: "Clear", tint: .gray).tappable { s.clearConversation() }
             Pill(text: "■ Stop", tint: .orange).tappable { s.interrupt() }
         }
     }
