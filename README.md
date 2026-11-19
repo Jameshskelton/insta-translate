@@ -89,8 +89,13 @@ PLAN.md         full design history and decision log
 
 - **Push-to-talk only.** Acoustic echo cancellation cannot start on built-in
   MBP mic arrays (`AVAudioEngine` -10875 — see `docs/PHASE0-AUDIT.md`), so an
-  always-open mic feedback-loops on its own output. Verify with
-  `tools/aec_probe.swift` whether *your* Mac can use open-mic mode.
+  always-open mic feedback-loops on its own output. AEC is **not attempted by
+  default**: a failed voice-processing enable even wedges the audio session so a
+  later no-AEC engine also fails to start (the mic then quietly delivers zero
+  frames and every press reports "no speech"). If you have a mic where AEC
+  works, opt in via `AudioEngine.preferVoiceProcessing`. The
+  `tools/mic_relay.swift` tool reproduces the whole mic→server path headlessly.
+  Verify with `tools/aec_probe.swift` whether *your* Mac can use open-mic mode.
 - Low-resource ASR (Lao/Khmer/Burmese) is poor; pick pairs the ASR actually
   supports.
 - The app is ad-hoc signed (fine for your own Mac). For distribution to others,

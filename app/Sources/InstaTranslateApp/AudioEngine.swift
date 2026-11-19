@@ -53,13 +53,27 @@ final class AudioEngine {
 
     func start() throws {
         guard !isRunning else { return }
-        do {
-            try startEngine(voiceProcessing: true)
-        } catch {
-            NSLog("AudioEngine: voice processing unavailable (%@); retrying without", "\(error)")
+        // Voice processing (system AEC) is OFF by default on purpose:
+        // on MacBook Pro built-in mic arrays it cannot start (-10875), and a
+        // failed voice-processing attempt then *poisons the audio session* so a
+        // subsequent no-VP engine also fails start() (invalid outputHWFormat).
+        // Only attempt the VP → no-VP fallback when the caller opts in.
+        if preferVoiceProcessing {
+            do {
+                try startEngine(voiceProcessing: true)
+            } catch {
+                NSLog("AudioEngine: voice processing unavailable (%@); retrying without", "\(error)")
+                try startEngine(voiceProcessing: false)
+            }
+        } else {
             try startEngine(voiceProcessing: false)
         }
     }
+
+    /// Opt in to the system AEC attempt for hardware that supports it.
+    /// Default off: on this Mac's built-in mic the attempt always fails and
+    /// leaves the audio session wedged for the app's lifetime.
+    var preferVoiceProcessing = false
 
     private func startEngine(voiceProcessing vp: Bool) throws {
         engine = AVAudioEngine()
