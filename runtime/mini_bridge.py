@@ -193,9 +193,18 @@ async def generate(req: GenReq, request: Request):
                     i16 = (np.clip(tail, -1, 1) * 32767).astype(np.int16)
                     loop.call_soon_threadsafe(q.put_nowait, i16.tobytes())
                     pending += n_blocks * CHUNK
-            if not stop.is_set() and pending < len(y):
+            if not stop.is_set():
                 tail = y[pending:]
+                # Natural ending: ZONOS3 trims the post-EOA decay aggressively
+                # when cloning, so cloned speech can cut off abruptly. Fade the
+                # final ~120 ms and pad ~180 ms of silence after synthesis.
                 if len(tail):
+                    n_fade = min(len(tail), int(0.12 * 48000))
+                    if n_fade > 0:
+                        tail = tail.copy()
+                        tail[-n_fade:] *= np.linspace(1.0, 0.0, n_fade, dtype=np.float32)
+                    tail = np.concatenate(
+                        [tail, np.zeros(int(0.18 * 48000), dtype=np.float32)])
                     i16 = (np.clip(tail, -1, 1) * 32767).astype(np.int16)
                     loop.call_soon_threadsafe(q.put_nowait, i16.tobytes())
         except Exception as e:
