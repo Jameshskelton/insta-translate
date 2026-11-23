@@ -221,6 +221,18 @@ def main():
             signal.signal(signal.SIGTERM, lambda *_: stop_all())
             _stopping.wait()
         return 1 if any(s["proc"] and s["proc"].poll() is not None for s in _services.values()) else 0
+    if cmd == "daemon":
+        RUN.mkdir(parents=True, exist_ok=True)
+        # Re-exec ourselves as a detached daemon in a new session so nothing
+        # in the caller's process group (e.g. a terminal or agent harness
+        # restart) can signal it. Logs go to run/supervisor.out.
+        argv = [sys.executable, str(Path(__file__).resolve()), "start"]
+        out = (RUN / "supervisor.out").open("ab")
+        p = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=out,
+                             stderr=subprocess.STDOUT, start_new_session=True,
+                             close_fds=True)
+        print(f"supervisor daemon pid {p.pid} (logs: {RUN / 'supervisor.out'})")
+        return 0
     if cmd == "stop":
         stop_all()
         return 0
